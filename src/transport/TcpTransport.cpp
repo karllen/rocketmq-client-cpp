@@ -33,6 +33,7 @@ TcpTransport::TcpTransport(TcpRemotingClient *pTcpRemointClient,
       m_ReadDatathread(NULL),
       m_readcallback(handle),
       m_tcpRemotingClient(pTcpRemointClient),
+      m_event_thread_running(false),
       m_event_base_status(false),
       m_event_base_mtx(),
       m_event_base_cv() {
@@ -88,6 +89,7 @@ tcpConnectStatus TcpTransport::connect(const string &strServerURL,
 
     evthread_make_base_notifiable(m_eventBase);
     
+    m_event_thread_running.store(true);
     m_ReadDatathread = new boost::thread(boost::bind(&TcpTransport::runThread, this));
     
     while(!m_event_base_status) {
@@ -135,6 +137,7 @@ void TcpTransport::disconnect(const string &addr) {
     m_connectEvent.notify_all();
     setTcpConnectStatus(e_connectInit);
     if (m_ReadDatathread) {
+      m_event_base_status.store(false);
       m_ReadDatathread->interrupt();
       exitBaseDispatch();
       while (m_ReadDatathread->timed_join(boost::posix_time::seconds(1)) ==
@@ -180,7 +183,7 @@ void TcpTransport::exitBaseDispatch() {
 }
 
 void TcpTransport::runThread() {
-  while (m_ReadDatathread) {
+  while (m_event_thread_running) {
     if (m_eventBase != NULL) {
       
       if (!m_event_base_status) {

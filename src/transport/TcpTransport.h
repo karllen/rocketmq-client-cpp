@@ -78,6 +78,7 @@ class TcpTransport {
   boost::mutex m_connectEventLock;
   boost::condition_variable_any m_connectEvent;
 
+  boost::atomic<bool> m_event_thread_running;
   boost::atomic<bool> m_event_base_status;
   boost::mutex        m_event_base_mtx;
   boost::condition_variable_any m_event_base_cv;

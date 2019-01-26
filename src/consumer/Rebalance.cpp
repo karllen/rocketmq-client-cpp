@@ -283,6 +283,10 @@ void Rebalance::unlockAll(bool oneway) {
     unlockBatchRequest->setMqSet(mqs);
 
     try {
+      if (pFindBrokerResult == NULL) {
+        LOG_INFO("Rebalance::unlockAll pFindBrokerResult is nullptr exception!");
+        continue;
+      }
       m_pClientFactory->getMQClientAPIImpl()->unlockBatchMQ(
           pFindBrokerResult->brokerAddr, unlockBatchRequest.get(), 1000,
           m_pConsumer->getSessionCredentials());
@@ -307,6 +311,10 @@ void Rebalance::unlock(MQMessageQueue mq) {
   unique_ptr<FindBrokerResult> pFindBrokerResult(
       m_pClientFactory->findBrokerAddressInSubscribe(mq.getBrokerName(),
                                                      MASTER_ID, true));
+  if (pFindBrokerResult == NULL) {
+      LOG_INFO("Rebalance::unlock pFindBrokerResult is nullptr exception!");
+      return;
+  }
   unique_ptr<UnlockBatchRequestBody> unlockBatchRequest(
       new UnlockBatchRequestBody());
   vector<MQMessageQueue> mqs;
@@ -363,6 +371,10 @@ void Rebalance::lockAll() {
     LOG_INFO("try to lock:" SIZET_FMT " mqs of broker:%s", itb->second->size(),
              itb->first.c_str());
     try {
+      if (pFindBrokerResult == NULL) {
+        LOG_INFO("Rebalance::lockAll pFindBrokerResult is nullptr exception!");
+        continue;
+      }
       vector<MQMessageQueue> messageQueues;
       m_pClientFactory->getMQClientAPIImpl()->lockBatchMQ(
           pFindBrokerResult->brokerAddr, lockBatchRequest.get(), messageQueues,
@@ -391,6 +403,11 @@ bool Rebalance::lock(MQMessageQueue mq) {
   unique_ptr<FindBrokerResult> pFindBrokerResult(
       m_pClientFactory->findBrokerAddressInSubscribe(mq.getBrokerName(),
                                                      MASTER_ID, true));
+  if (pFindBrokerResult == NULL) {
+    LOG_INFO("Rebalance::lock pFindBrokerResult is nullptr exception!");
+    return;
+  }
+
   unique_ptr<LockBatchRequestBody> lockBatchRequest(new LockBatchRequestBody());
   lockBatchRequest->setClientId(m_pConsumer->getMQClientId());
   lockBatchRequest->setConsumerGroup(m_pConsumer->getGroupName());
